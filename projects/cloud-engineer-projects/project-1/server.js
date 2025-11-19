@@ -1,18 +1,33 @@
 // server.js
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const mysql = require("mysql2/promise");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// TODO: change to your actual DB name/user/pass
+// Create MySQL connection pool using environment variables
 const pool = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "your_mysql_password",
-  database: "employee_directory",
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
+
+// Optional: check DB connection on startup
+(async () => {
+  try {
+    const conn = await pool.getConnection();
+    console.log("✅ Connected to MySQL as:", conn.config.user);
+    conn.release();
+  } catch (err) {
+    console.error("❌ MySQL connection error at startup:", err.message);
+  }
+})();
 
 // Middlewares
 app.use(express.json());
